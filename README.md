@@ -1,62 +1,140 @@
-# TypeScript Next.js example
+- [styled-components + 타입스크립트 적용](#styled-components--타입스크립트-적용)
+  - [파일 목록](#파일-목록)
+  - [`styled-reset`](#styled-reset)
+    - [사용법](#사용법)
+  - [스타일컴포넌트에 타입적용하기](#스타일컴포넌트에-타입적용하기)
+    - [interface + 제네릭](#interface--제네릭)
+      - [신규 스타일-컴포넌트에 적용](#신규-스타일-컴포넌트에-적용)
+      - [상속받는 스타일-컴포넌트에 적용 1](#상속받는-스타일-컴포넌트에-적용-1)
+      - [상속받는 스타일-컴포넌트에 적용 2](#상속받는-스타일-컴포넌트에-적용-2)
+      - [상속받는 스타일-컴포넌트에 적용 3](#상속받는-스타일-컴포넌트에-적용-3)
+      - [상속받는 스타일-컴포넌트에 적용 4](#상속받는-스타일-컴포넌트에-적용-4)
 
-This is a really simple project that shows the usage of Next.js with TypeScript.
+# styled-components + 타입스크립트 적용
 
-## Deploy your own
+`npm i styled-component`
+`npm i -D @types/styled-components`
 
-Deploy the example using [Vercel](https://vercel.com):
+**예전방식**
+`styled-components` 설치후 theme을 활용하기위해
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/vercel/next.js/tree/canary/examples/with-typescript)
+## 파일 목록
 
-## How to use it?
+- `styled-components.ts`
+  파일을 만들고 선언해주어야 했는대, `@types/styled-components` 가 추가된 이후
+- `src/styles/styled.d.ts` : `ThemeProvider`에서 사용할 & 기타 스타일 적용시 사용할 값의 타입 지정
+  > 타입스크립트 선언 파일 d.ts는 타입스크립트 코드의 타입 추론을 돕는 파일
+- `src/styles/theme.ts` : : `styled.d.ts`에서 정의한 테마 interface의 실제 테마를 구현하는 곳!
+- `src/styles/global-styles.ts` : reset-css과 전체적용 스타일을 작성
 
-### Using `create-next-app`
+  를 생성해주면 됨, 내가 불러다 쓸것이기에 위치는 편한곳에 두자. 나는 `src/styles`폴더에 모았다.
 
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init) or [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/) to bootstrap the example:
+## `styled-reset`
 
-```bash
-npx create-next-app --example with-typescript with-typescript-app
-# or
-yarn create next-app --example with-typescript with-typescript-app
+`global-styles.ts`에 reset-css를 적용해보쟈.npm에 `styled-reset`, styled 전용이 있길래 받아봤다.
+`npm i styled-reset`
+
+### 사용법
+
+1. `<Reset/>`로 사용하기
+2. `${reset} + createGlobalStyle`로 사용하기
+
+```js
+// 최상위 컴포넌트 : ex App.js, _app.js
+
+// 1번 컴포넌트 방식
+import { Reset } from 'styled-reset';
+const App = () => (
+  <>
+    <Reset /> {/* 여기에 리셋-컴포넌트 위치 */}
+    <div>여기는 최상위 컴포넌트</div>
+  </>
+);
+
+// 2번 createGlobalstyle 방식
+import { reset } from 'styled-reset';
+import { createGlobalStyle } from 'styled-components';
+
+// 글로벌 스타일은 src/styles/global-style.ts 에 위치하고 임포트 하여 사용하자!
+const GlobalStyle = createGlobalStyle`
+  ${reset}
+  // 그 밖에 글로벌 스타일 적용할 내용 적기
+`;
+const App = () => (
+  <>
+    <GlobalStyle /> {/* 여기에 글로벌-스타일-컴포넌트 위치 */}
+    <div>여기는 최상위 컴포넌트</div>
+  </>
+);
 ```
 
-### Download manually
+## 스타일컴포넌트에 타입적용하기
 
-Download the example:
+### interface + 제네릭
 
-```bash
-curl https://codeload.github.com/vercel/next.js/tar.gz/canary | tar -xz --strip=2 next.js-canary/examples/with-typescript
-cd with-typescript
+#### 신규 스타일-컴포넌트에 적용
+
+```ts
+// 컴포넌트
+// 스타일-컴포넌트에 적용할 타입과 프롭스-이름: 값 interface 생성
+interface TitleProps {
+  readonly isActive: boolean;
+}
+// 위에서 생성한 인터메이스를 제네릭으로 지정
+const Title = styled.h1<TitleProps>`
+  color: ${(props) => (props.isActive ? 'blue' : 'red')};
+`;
 ```
 
-Install it and run:
+#### 상속받는 스타일-컴포넌트에 적용 1
 
-```bash
-npm install
-npm run dev
-# or
-yarn
-yarn dev
+```ts
+// 컴포넌트 파일
+// const 뉴컴포넌트명 = styled(상속받을컴포명)<{프롭스명 : 타입}>`스타일정의`
+const NewHeader = styled(Header)<{ customColor: string }>`
+  color: ${(props) => props.customColor};
+`;
 ```
 
-Deploy it to the cloud with [Vercel](https://vercel.com/import?filter=next.js&utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+#### 상속받는 스타일-컴포넌트에 적용 2
 
-## Notes
-
-This example shows how to integrate the TypeScript type system into Next.js. Since TypeScript is supported out of the box with Next.js, all we have to do is to install TypeScript.
-
-```
-npm install --save-dev typescript
-```
-
-To enable TypeScript's features, we install the type declarations for React and Node.
-
-```
-npm install --save-dev @types/react @types/react-dom @types/node
+```ts
+// 컴포넌트 파일
+// const 뉴컴포넌트명 = styled<{프롭스:타입지정}>Header`스타일지정`
+const Title =
+  styled <
+  { isActive: boolean } >
+  Header`
+  color: ${(props) =>
+    props.isActive ? props.theme.primaryColor : props.theme.secondaryColor}
+`;
 ```
 
-When we run `next dev` the next time, Next.js will start looking for any `.ts` or `.tsx` files in our project and builds it. It even automatically creates a `tsconfig.json` file for our project with the recommended settings.
+#### 상속받는 스타일-컴포넌트에 적용 3
 
-Next.js has built-in TypeScript declarations, so we'll get autocompletion for Next.js' modules straight away.
+```ts
+// 컴포넌트 파일
+import Header, { Props as HeaderProps } from './Header';
 
-A `type-check` script is also added to `package.json`, which runs TypeScript's `tsc` CLI in `noEmit` mode to run type-checking separately. You can then include this, for example, in your `test` scripts.
+// const 뉴컴포넌트명 = styled<{프롭스:타입지정}>((isActive,...rest)=>{<Header {...rest} />)`스타일지정`
+const Title = styled<{ isActive: boolean }>(({ isActive, ...rest }) => (
+  <Header {...rest} />
+))`
+  color: ${(props) =>
+    props.isActive ? props.theme.primaryColor : props.theme.secondaryColor};
+`;
+```
+
+#### 상속받는 스타일-컴포넌트에 적용 4
+
+```ts
+import Header, { Props as HeaderProps } from './Header';
+
+const Title =
+  (styled < { isActive: boolean }) &
+  (HeaderProps >
+    (({ isActive, ...rest }) => <Header {...rest} />)`
+  color: ${(props) =>
+    props.isActive ? props.theme.primaryColor : props.theme.secondaryColor}
+`);
+```
